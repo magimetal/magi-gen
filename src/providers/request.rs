@@ -64,9 +64,9 @@ mod tests {
 
     #[test]
     fn request_body_builder_matches_codex_image_shape() {
-        let body = image_request_body("red circle", "gpt-5.5", "1024x1024", "low", "png");
+        let body = image_request_body("red circle", "gpt-5.4", "1024x1024", "low", "png");
 
-        assert_eq!(body["model"], "gpt-5.5");
+        assert_eq!(body["model"], "gpt-5.4");
         assert_eq!(body["store"], false);
         assert_eq!(body["stream"], true);
         assert_eq!(body["input"][0]["role"], "user");
@@ -82,7 +82,7 @@ mod tests {
 
     #[test]
     fn output_format_webp_is_written_to_tool_body() {
-        let body = image_request_body("red circle", "gpt-5.5", "1024x1024", "low", "webp");
+        let body = image_request_body("red circle", "gpt-5.4", "1024x1024", "low", "webp");
 
         assert_eq!(body["tools"][0]["output_format"], "webp");
     }
@@ -91,7 +91,7 @@ mod tests {
     fn image_request_default_output_format_is_png() {
         let request = ImageRequest {
             prompt: "red circle".to_string(),
-            model: "gpt-5.5".to_string(),
+            model: "gpt-5.4".to_string(),
             size: "1024x1024".to_string(),
             quality: "low".to_string(),
             output_format: "png".to_string(),

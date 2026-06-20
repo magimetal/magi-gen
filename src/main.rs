@@ -68,7 +68,7 @@ fn generate(args: GenerateArgs) -> anyhow::Result<()> {
 
 fn generate_codex(args: GenerateArgs, paths: &AppPaths) -> anyhow::Result<()> {
     if args.model == "gpt-image-2" {
-        anyhow::bail!("Codex provider does not support gpt-image-2 as Responses model; use gpt-5.5")
+        anyhow::bail!("Codex provider does not support gpt-image-2 as Responses model; use gpt-5.4")
     }
     let credential = store::codex_credential(paths)?;
     let provider = CodexImageProvider::new(credential.access, credential.account_id)?;
