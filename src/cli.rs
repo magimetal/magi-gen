@@ -17,6 +17,9 @@ pub struct Cli {
     #[arg(short, long)]
     pub output: Option<PathBuf>,
 
+    #[arg(long, default_value = "png", value_parser = ["png", "webp", "jpeg"])]
+    pub output_format: String,
+
     #[arg(long)]
     pub base64: bool,
 }
@@ -52,6 +55,8 @@ pub struct GenerateArgs {
     pub size: String,
     #[arg(long, default_value = "low")]
     pub quality: String,
+    #[arg(long, default_value = "png", value_parser = ["png", "webp", "jpeg"])]
+    pub output_format: String,
     #[arg(long)]
     pub base_url: Option<String>,
     #[arg(long)]

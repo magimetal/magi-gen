@@ -45,6 +45,7 @@ fn run(cli: Cli) -> anyhow::Result<()> {
                 model: providers::DEFAULT_CODEX_MODEL.to_string(),
                 size: "1024x1024".to_string(),
                 quality: "low".to_string(),
+                output_format: cli.output_format,
                 base_url: None,
                 api_key_env: None,
                 base64: cli.base64,
@@ -72,13 +73,15 @@ fn generate_codex(args: GenerateArgs, paths: &AppPaths) -> anyhow::Result<()> {
     let credential = store::codex_credential(paths)?;
     let provider = CodexImageProvider::new(credential.access, credential.account_id)?;
     let prompt = args.prompt.clone();
+    let output_format = args.output_format.clone();
     let result = provider.generate(ImageRequest {
         prompt: args.prompt,
         model: args.model,
         size: args.size,
         quality: args.quality,
+        output_format: args.output_format,
     })?;
-    write_generate_result(result, args.output, args.base64, &prompt)
+    write_generate_result(result, args.output, args.base64, &prompt, &output_format)
 }
 
 fn generate_openai_compatible(args: GenerateArgs) -> anyhow::Result<()> {
@@ -89,13 +92,15 @@ fn generate_openai_compatible(args: GenerateArgs) -> anyhow::Result<()> {
     let api_key = openai_compatible_api_key_from_env(&api_key_env)?;
     let provider = OpenAiCompatibleImageProvider::new(api_key, base_url)?;
     let prompt = args.prompt.clone();
+    let output_format = args.output_format.clone();
     let result = provider.generate(ImageRequest {
         prompt: args.prompt,
         model: args.model,
         size: args.size,
         quality: args.quality,
+        output_format: args.output_format,
     })?;
-    write_generate_result(result, args.output, args.base64, &prompt)
+    write_generate_result(result, args.output, args.base64, &prompt, &output_format)
 }
 
 fn write_generate_result(
@@ -103,19 +108,20 @@ fn write_generate_result(
     output: Option<PathBuf>,
     base64: bool,
     prompt: &str,
+    output_format: &str,
 ) -> anyhow::Result<()> {
     if base64 {
         output::print_base64(&result.base64);
     } else {
-        let output = output.unwrap_or_else(|| default_output_for_prompt(prompt));
+        let output = output.unwrap_or_else(|| default_output_for_prompt(prompt, output_format));
         output::write_image_result(&result.base64, &output)?;
         eprintln!("wrote {}", output.display());
     }
     Ok(())
 }
 
-fn default_output_for_prompt(prompt: &str) -> PathBuf {
-    PathBuf::from(format!("{}.png", slugify_prompt(prompt)))
+fn default_output_for_prompt(prompt: &str, output_format: &str) -> PathBuf {
+    PathBuf::from(format!("{}.{}", slugify_prompt(prompt), output_format))
 }
 
 fn slugify_prompt(prompt: &str) -> String {
@@ -228,10 +234,21 @@ mod tests {
     #[test]
     fn filename_derivation_slugifies_prompt() {
         assert_eq!(
-            default_output_for_prompt("Cyberpunk raccoon eating ramen!!!"),
+            default_output_for_prompt("Cyberpunk raccoon eating ramen!!!", "png"),
             PathBuf::from("cyberpunk-raccoon-eating-ramen.png")
         );
-        assert_eq!(default_output_for_prompt("***"), PathBuf::from("image.png"));
+        assert_eq!(
+            default_output_for_prompt("Cyberpunk raccoon eating ramen!!!", "webp"),
+            PathBuf::from("cyberpunk-raccoon-eating-ramen.webp")
+        );
+        assert_eq!(
+            default_output_for_prompt("Cyberpunk raccoon eating ramen!!!", "jpeg"),
+            PathBuf::from("cyberpunk-raccoon-eating-ramen.jpeg")
+        );
+        assert_eq!(
+            default_output_for_prompt("***", "png"),
+            PathBuf::from("image.png")
+        );
         assert_eq!(
             slugify_prompt("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"),
             "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuv"
@@ -248,6 +265,7 @@ mod tests {
             None,
             true,
             "prompt",
+            "png",
         )
         .unwrap();
     }
