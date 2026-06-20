@@ -1,117 +1,181 @@
-# magi-gen
+<p align="center">
+  <h1 align="center">magi-gen</h1>
+</p>
 
-Standalone image generation CLI for Codex/ChatGPT subscription OAuth and OpenAI-compatible Responses APIs.
+<p align="center">
+  Standalone Rust CLI for generating images from text prompts using Codex/ChatGPT subscription OAuth or any OpenAI-compatible Responses API. Supports transparent background output via automatic chromakey removal.
+</p>
 
-## Install
+<p align="center">
+  <img alt="Rust 2024" src="https://img.shields.io/badge/Rust-2024-000000?logo=rust&logoColor=white">
+  <img alt="Version 0.0.1" src="https://img.shields.io/badge/version-0.0.1-blue">
+  <img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-green">
+  <img alt="Binary: magi-gen" src="https://img.shields.io/badge/binary-magi--gen-4EAA25">
+  <a href="https://crates.io/crates/magi-gen"><img alt="crates.io" src="https://img.shields.io/badge/crates.io-magi--gen-orange"></a>
+</p>
 
-From repo checkout:
+> **TL;DR:** `cargo install magi-gen`, run `magi-gen login codex`, then `magi-gen "a cat in a spacesuit" -o cat.png`.
 
-```bash
-cargo install --path .
+---
+
+## Table of contents
+
+- [What it does](#what-it-does)
+- [Quick start](#quick-start)
+- [Transparent backgrounds](#transparent-backgrounds)
+- [Commands](#commands)
+- [Options](#options)
+- [Files and configuration](#files-and-configuration)
+- [Security](#security)
+- [License](#license)
+
+## What it does
+
+| Capability | Details |
+| --- | --- |
+| **Two providers** | **Codex** (default): ChatGPT subscription OAuth via PKCE login with automatic token refresh. **OpenAI-compatible**: API key + base URL against any Responses API endpoint. |
+| **Image generation** | Uses OpenAI Responses API with hosted `image_generation` tool. Streams via SSE, captures partial and final images. |
+| **Transparent output** | `--transparent` flag injects a solid pink background prompt, then removes it post-generation via corner-color detection and `rustychroma` chromakey. Outputs RGBA PNG with alpha channel. |
+| **Output formats** | PNG (default), WebP (~30% smaller), or JPEG via `--output-format`. |
+| **Model override** | Default `gpt-5.5`; override with `--model gpt-5.4`. |
+| **Standalone auth** | Own app home at `~/.magi-gen/`. Never depends on `magi-code` or `~/.mc/` except optional explicit `import magi-code`. |
+| **Secure by default** | Auth files locked to `0600`, symlinks rejected, all secrets redacted in output and errors. |
+
+## Quick start
+
+Requirements: Rust 1.88.0+ with Cargo, network access to OpenAI/Codex backend.
+
+Install from crates.io:
+
+```sh
+cargo install magi-gen
 ```
 
-Or build release binary:
+Login with Codex/ChatGPT subscription OAuth (opens browser):
 
-```bash
-cargo build --release
-./target/release/magi-gen --help
-```
-
-## Quickstart (Codex / ChatGPT subscription)
-
-Login with standalone Codex OAuth:
-
-```bash
+```sh
 magi-gen login codex
 ```
 
-Generate image with explicit output:
+Generate an image:
 
-```bash
-magi-gen generate "cyberpunk raccoon eating ramen" --output raccoon.png
+```sh
+magi-gen "cyberpunk raccoon eating ramen" -o raccoon.png
 ```
 
-Generate image with prompt shorthand and derived filename:
+Shorthand with derived filename:
 
-```bash
+```sh
 magi-gen "red circle on white background"
 # writes red-circle-on-white-background.png
 ```
 
-Optional import for existing magi-code users:
+High quality WebP:
 
-```bash
-magi-gen import magi-code
+```sh
+magi-gen generate "neon city skyline at night" --quality high --output-format webp -o city.webp
 ```
 
-This reads `~/.mc/auth.json` only for explicit `import magi-code`, maps `openai-codex` to local `codex`, then writes local auth.
+### OpenAI-compatible API
 
-## Quickstart (OpenAI-compatible API)
+For providers using API keys instead of subscription OAuth:
 
-Use API root URL, not endpoint URL:
-
-```bash
+```sh
 export OPENAI_API_KEY=sk-...
 magi-gen generate "red circle on white background" \
   --provider openai-compatible \
   --base-url https://api.openai.com/v1 \
   --api-key-env OPENAI_API_KEY \
   --model gpt-5.5 \
-  --output openai-circle.png
+  --output out.png
 ```
 
-Print base64 instead of writing file:
+Print base64 to stdout instead of writing file:
 
-```bash
-magi-gen generate "small icon" \
-  --provider openai-compatible \
-  --base-url https://api.openai.com/v1 \
-  --base64
+```sh
+magi-gen generate "small icon" --base64
 ```
+
+## Transparent backgrounds
+
+The `--transparent` flag produces images with the background removed, suitable for icons, logos, and compositing:
+
+```sh
+magi-gen "minimalist app icon, blue lightning bolt" --transparent -o icon.png
+```
+
+**How it works:**
+
+1. Appends a system prompt instruction telling the model to generate a **solid bright pink background** (`#FF0096`-like).
+2. After generation, samples the **4 corner pixels** to detect the dominant background color.
+3. Runs `rustychroma::remove_range()` — a soft chroma key using BT.601 color distance — to strip the background while preserving edge detail.
+4. Outputs two files:
+   - `icon.png` — transparent **RGBA PNG** with alpha channel
+   - `icon-original.png` — original **RGB PNG** with pink background intact
+
+```sh
+magi-gen "a cartoon robot mascot" --transparent -o robot.png
+# detected transparent background color #F0107B
+# wrote robot.png          (RGBA, transparent)
+# wrote robot-original.png (RGB, original)
+```
+
+> **Note:** Transparent mode forces PNG output format (required for alpha channel). If you pass `--output-format webp` with `--transparent`, a warning is printed and PNG is used.
 
 ## Commands
 
-```bash
-magi-gen login codex
-magi-gen logout codex
-magi-gen auth status
-magi-gen import magi-code
-magi-gen generate "prompt" [options]
-magi-gen "prompt" [-o output.png] [--base64]
-```
-
-- `login codex`: standalone OAuth login for Codex/ChatGPT subscription.
-- `logout codex`: removes local Codex auth record.
-- `auth status`: reports whether local Codex auth is configured.
-- `import magi-code`: optional one-shot copy from magi-code auth store.
-- `generate`: generates image via selected provider.
+| Command | Description |
+| --- | --- |
+| `magi-gen "prompt" [options]` | Shorthand generation (no subcommand needed) |
+| `magi-gen generate "prompt" [options]` | Explicit generate subcommand |
+| `magi-gen login codex` | OAuth login via browser (PKCE flow) |
+| `magi-gen logout codex` | Remove stored Codex credentials |
+| `magi-gen auth status` | Check if Codex auth is configured |
+| `magi-gen import magi-code` | Import credentials from `~/.mc/auth.json` (maps `openai-codex` → `codex`) |
 
 ## Options
 
-- `--model <MODEL>`: Responses model. Default: `gpt-5.5`.
-- `--size <SIZE>`: image size string. Default: `1024x1024`.
-- `--quality <QUALITY>`: image quality string. Default: `low`.
-- `--output, -o <PATH>`: output image path. If omitted and `--base64` is not set, filename derives from prompt: lowercase slug, max 48 chars, `.png`.
-- `--base64`: print base64 image result to stdout instead of writing file.
-- `--provider <PROVIDER>`: `codex` or `openai-compatible`. Default: `codex`.
-- `--base-url <URL>`: API root for OpenAI-compatible provider, for example `https://api.openai.com/v1`.
-- `--api-key-env <VAR>`: env var containing API key. Default: `OPENAI_API_KEY`.
+| Flag | Default | Values | Notes |
+| --- | --- | --- | --- |
+| `-o, --output <PATH>` | derived from prompt | file path | Slugified from prompt if omitted |
+| `--model <MODEL>` | `gpt-5.5` | string | Override to `gpt-5.4` etc. |
+| `--size <SIZE>` | `1024x1024` | string | Passed to provider; invalid sizes may be rejected |
+| `--quality <QUALITY>` | `low` | `low\|medium\|high\|auto` | `low` is fastest/cheapest |
+| `--output-format <FMT>` | `png` | `png\|webp\|jpeg` | Forced to `png` when `--transparent` |
+| `--transparent` | off | flag | Chromakey background removal, outputs RGBA PNG + original |
+| `--base64` | off | flag | Print base64 to stdout instead of writing file |
+| `--provider` | `codex` | `codex\|openai-compatible` | Selects auth method |
+| `--base-url <URL>` | — | URL root | Required for `openai-compatible` (e.g. `https://api.openai.com/v1`) |
+| `--api-key-env <VAR>` | `OPENAI_API_KEY` | env var name | Which env var holds the API key |
 
-## Files
+## Files and configuration
 
 Default app home:
 
 ```text
 ~/.magi-gen/
-├── auth.json
-├── settings.json
+├── auth.json       # OAuth credentials (0600 permissions)
+├── settings.json   # Provider configuration
 └── cache/
 ```
 
 Override app home:
 
-```bash
+```sh
 MAGI_GEN_HOME=/custom/path magi-gen auth status
 ```
 
-Auth file permissions are owner-only (`0600`) on Unix. Symlinked auth files are rejected. Secrets are not printed in status or error output.
+The system prompt lives in `prompts/system.md` and is compiled in at build time via `include_str!`. Edit it to iterate on generation behavior without touching Rust code.
+
+## Security
+
+- Auth files locked to **owner-only `0600`** on Unix
+- **Symlinked auth files rejected** before read
+- **Never reads `~/.mc/`** except explicit `import magi-code` command
+- OAuth callback **state validation** prevents CSRF
+- All secrets **redacted** in output: bearer tokens, refresh tokens, account IDs, API keys (`sk-*`), OAuth codes
+- **Atomic writes** for auth file updates (temp file + rename)
+
+## License
+
+[MIT](LICENSE)

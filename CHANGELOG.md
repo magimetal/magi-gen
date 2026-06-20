@@ -5,12 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.0.1] - 2025-06-19
 
-### Changed
-- Renamed project, package, binary, app home, env var, and user-agent from `magi-image-gen-cli` to `magi-gen` for crates.io publishing.
-
-## [0.1.0] - 2025-06-19
+First public release on crates.io.
 
 ### Added
 - Standalone image generation CLI with two providers:
