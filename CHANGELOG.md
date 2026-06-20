@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+- Renamed project, package, binary, app home, env var, and user-agent from `magi-image-gen-cli` to `magi-gen` for crates.io publishing.
+
 ## [0.1.0] - 2025-06-19
 
 ### Added
@@ -12,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Codex** (default): ChatGPT subscription OAuth via PKCE login, token auto-refresh
   - **OpenAI-compatible**: API key + `--base-url` against any Responses API endpoint
 - SSE streaming parser for `image_generation` tool (partial + final image capture)
-- Standalone auth store at `~/.magi-image-gen-cli/` with `0600` permissions, symlink rejection, atomic writes
+- Standalone auth store at `~/.magi-gen/` with `0600` permissions, symlink rejection, atomic writes
 - Secret redaction (tokens, account IDs, API keys) in all output and error paths
 - `login codex` / `logout codex` / `auth status` commands
 - `import magi-code` optional credential migration from `~/.mc/auth.json`
@@ -28,7 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Uses `rustychroma::remove_range()` for soft chroma key removal
   - Outputs transparent RGBA PNG + original RGB copy (`*-original.png`)
 - System prompt extracted to `prompts/system.md` (compiled via `include_str!`)
-- `MAGI_IMAGE_GEN_HOME` environment variable for custom app home
+- `MAGI_GEN_HOME` environment variable for custom app home
 - `settings.json` for provider configuration
 - 44 unit tests covering SSE parsing, auth, config, URL validation, chromakey, CLI
 

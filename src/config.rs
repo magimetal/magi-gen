@@ -13,11 +13,11 @@ pub struct AppPaths {
 
 impl AppPaths {
     pub fn resolve() -> anyhow::Result<Self> {
-        if let Some(root) = env::var_os("MAGI_IMAGE_GEN_HOME") {
+        if let Some(root) = env::var_os("MAGI_GEN_HOME") {
             return Ok(Self::from_root(PathBuf::from(root)));
         }
         let home = dirs::home_dir().context("could not resolve home directory")?;
-        Ok(Self::from_root(home.join(".magi-image-gen-cli")))
+        Ok(Self::from_root(home.join(".magi-gen")))
     }
 
     pub fn from_root(root: PathBuf) -> Self {

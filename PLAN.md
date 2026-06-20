@@ -1,4 +1,4 @@
-# PLAN: magi-image-gen-cli
+# PLAN: magi-gen
 
 ## Objective
 Build standalone Rust CLI `magi-image-gen-cli` that generates images from a prompt using either:

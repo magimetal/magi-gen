@@ -1,9 +1,14 @@
 [package]
-name = "magi-image-gen-cli"
+name = "magi-gen"
 version = "0.1.0"
 edition = "2024"
 rust-version = "1.88.0"
-publish = false
+license = "MIT"
+description = "Standalone image generation CLI for Codex/ChatGPT subscription OAuth and OpenAI-compatible Responses APIs"
+repository = "https://github.com/magimetal/magi-image-gen-cli"
+keywords = ["openai", "image-generation", "cli", "codex", "chromakey"]
+categories = ["command-line-utilities", "multimedia::images"]
+readme = "README.md"
 
 [dependencies]
 anyhow = "1.0"

@@ -1,4 +1,4 @@
-# magi-image-gen-cli
+# magi-gen
 
 Standalone image generation CLI for Codex/ChatGPT subscription OAuth and OpenAI-compatible Responses APIs.
 
@@ -14,7 +14,7 @@ Or build release binary:
 
 ```bash
 cargo build --release
-./target/release/magi-image-gen-cli --help
+./target/release/magi-gen --help
 ```
 
 ## Quickstart (Codex / ChatGPT subscription)
@@ -22,26 +22,26 @@ cargo build --release
 Login with standalone Codex OAuth:
 
 ```bash
-magi-image-gen-cli login codex
+magi-gen login codex
 ```
 
 Generate image with explicit output:
 
 ```bash
-magi-image-gen-cli generate "cyberpunk raccoon eating ramen" --output raccoon.png
+magi-gen generate "cyberpunk raccoon eating ramen" --output raccoon.png
 ```
 
 Generate image with prompt shorthand and derived filename:
 
 ```bash
-magi-image-gen-cli "red circle on white background"
+magi-gen "red circle on white background"
 # writes red-circle-on-white-background.png
 ```
 
 Optional import for existing magi-code users:
 
 ```bash
-magi-image-gen-cli import magi-code
+magi-gen import magi-code
 ```
 
 This reads `~/.mc/auth.json` only for explicit `import magi-code`, maps `openai-codex` to local `codex`, then writes local auth.
@@ -52,7 +52,7 @@ Use API root URL, not endpoint URL:
 
 ```bash
 export OPENAI_API_KEY=sk-...
-magi-image-gen-cli generate "red circle on white background" \
+magi-gen generate "red circle on white background" \
   --provider openai-compatible \
   --base-url https://api.openai.com/v1 \
   --api-key-env OPENAI_API_KEY \
@@ -63,7 +63,7 @@ magi-image-gen-cli generate "red circle on white background" \
 Print base64 instead of writing file:
 
 ```bash
-magi-image-gen-cli generate "small icon" \
+magi-gen generate "small icon" \
   --provider openai-compatible \
   --base-url https://api.openai.com/v1 \
   --base64
@@ -72,12 +72,12 @@ magi-image-gen-cli generate "small icon" \
 ## Commands
 
 ```bash
-magi-image-gen-cli login codex
-magi-image-gen-cli logout codex
-magi-image-gen-cli auth status
-magi-image-gen-cli import magi-code
-magi-image-gen-cli generate "prompt" [options]
-magi-image-gen-cli "prompt" [-o output.png] [--base64]
+magi-gen login codex
+magi-gen logout codex
+magi-gen auth status
+magi-gen import magi-code
+magi-gen generate "prompt" [options]
+magi-gen "prompt" [-o output.png] [--base64]
 ```
 
 - `login codex`: standalone OAuth login for Codex/ChatGPT subscription.
@@ -102,7 +102,7 @@ magi-image-gen-cli "prompt" [-o output.png] [--base64]
 Default app home:
 
 ```text
-~/.magi-image-gen-cli/
+~/.magi-gen/
 ├── auth.json
 ├── settings.json
 └── cache/
@@ -111,7 +111,7 @@ Default app home:
 Override app home:
 
 ```bash
-MAGI_IMAGE_GEN_HOME=/custom/path magi-image-gen-cli auth status
+MAGI_GEN_HOME=/custom/path magi-gen auth status
 ```
 
 Auth file permissions are owner-only (`0600`) on Unix. Symlinked auth files are rejected. Secrets are not printed in status or error output.

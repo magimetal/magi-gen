@@ -94,7 +94,7 @@ pub(crate) fn codex_credential_with_refresh(
 ) -> anyhow::Result<CodexCredential> {
     let auth = read_auth(paths)?;
     let Some(record) = auth.providers.get(crate::providers::CODEX_PROVIDER) else {
-        anyhow::bail!("Not logged in. Run: magi-image-gen-cli login codex")
+        anyhow::bail!("Not logged in. Run: magi-gen login codex")
     };
     let AuthProviderRecord::OAuth {
         access,
@@ -103,18 +103,15 @@ pub(crate) fn codex_credential_with_refresh(
         account_id,
     } = record;
     if access.is_empty() {
-        anyhow::bail!("Not logged in. Run: magi-image-gen-cli login codex")
+        anyhow::bail!("Not logged in. Run: magi-gen login codex")
     }
     if token_needs_refresh(*expires) {
         let refresh = refresh
             .as_deref()
             .filter(|value| !value.is_empty())
-            .ok_or_else(|| {
-                anyhow::anyhow!("Codex OAuth expired. Run: magi-image-gen-cli login codex")
-            })?;
-        let token = refresh_exchange(refresh).map_err(|_| {
-            anyhow::anyhow!("Codex OAuth expired. Run: magi-image-gen-cli login codex")
-        })?;
+            .ok_or_else(|| anyhow::anyhow!("Codex OAuth expired. Run: magi-gen login codex"))?;
+        let token = refresh_exchange(refresh)
+            .map_err(|_| anyhow::anyhow!("Codex OAuth expired. Run: magi-gen login codex"))?;
         let credential = CodexCredential {
             access: token.access.clone(),
             account_id: token.account_id.clone(),
@@ -126,9 +123,7 @@ pub(crate) fn codex_credential_with_refresh(
         .clone()
         .filter(|value| !value.is_empty())
         .ok_or_else(|| {
-            anyhow::anyhow!(
-                "Codex OAuth record missing account id. Run: magi-image-gen-cli login codex"
-            )
+            anyhow::anyhow!("Codex OAuth record missing account id. Run: magi-gen login codex")
         })?;
     Ok(CodexCredential {
         access: access.clone(),

@@ -66,7 +66,7 @@ pub fn codex_sse_headers(token: &str, account_id: &str) -> BTreeMap<String, Stri
         ("content-type".to_string(), "application/json".to_string()),
         (
             "user-agent".to_string(),
-            format!("magi-image-gen-cli/{}", env!("CARGO_PKG_VERSION")),
+            format!("magi-gen/{}", env!("CARGO_PKG_VERSION")),
         ),
         ("authorization".to_string(), format!("Bearer {token}")),
         ("chatgpt-account-id".to_string(), account_id.to_string()),

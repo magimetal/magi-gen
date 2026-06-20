@@ -3,7 +3,7 @@ use std::path::PathBuf;
 
 #[derive(Debug, Parser)]
 #[command(
-    name = "magi-image-gen-cli",
+    name = "magi-gen",
     version,
     about = "Generate images with Codex-backed Responses API"
 )]

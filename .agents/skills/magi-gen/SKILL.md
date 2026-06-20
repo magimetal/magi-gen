@@ -1,29 +1,29 @@
-# magi-image-gen-cli
+# magi-gen
 
 Generate images from text prompts using OpenAI Codex/ChatGPT subscription OAuth or any OpenAI-compatible Responses API.
 
 ## When to Use
 
-Use when the user wants to generate images from text prompts. Assumes `magi-image-gen-cli` is installed and logged in (`magi-image-gen-cli login codex`).
+Use when the user wants to generate images from text prompts. Assumes `magi-gen` is installed and logged in (`magi-gen login codex`).
 
 ## Commands
 
 ### Basic generation (shorthand)
 
 ```bash
-magi-image-gen-cli "your prompt here" -o output.png
+magi-gen "your prompt here" -o output.png
 ```
 
 ### Explicit generate subcommand
 
 ```bash
-magi-image-gen-cli generate "your prompt here" -o output.png
+magi-gen generate "your prompt here" -o output.png
 ```
 
 ### Transparent background
 
 ```bash
-magi-image-gen-cli "a cartoon logo icon" --transparent -o logo.png
+magi-gen "a cartoon logo icon" --transparent -o logo.png
 ```
 
 Produces two files:
@@ -50,34 +50,34 @@ The `--transparent` flag injects a prompt instruction telling the model to use a
 ## Auth Management
 
 ```bash
-magi-image-gen-cli login codex        # OAuth login via browser
-magi-image-gen-cli logout codex       # Remove stored credentials
-magi-image-gen-cli auth status        # Check if configured
-magi-image-gen-cli import magi-code   # Import creds from ~/.mc/auth.json
+magi-gen login codex        # OAuth login via browser
+magi-gen logout codex       # Remove stored credentials
+magi-gen auth status        # Check if configured
+magi-gen import magi-code   # Import creds from ~/.mc/auth.json
 ```
 
-Auth stored at `~/.magi-image-gen-cli/auth.json` with `0600` permissions. Override home with `MAGI_IMAGE_GEN_HOME`.
+Auth stored at `~/.magi-gen/auth.json` with `0600` permissions. Override home with `MAGI_GEN_HOME`.
 
 ## Examples
 
 ### Icon/logo with transparency
 ```bash
-magi-image-gen-cli "minimalist app icon, a blue lightning bolt" --transparent -o app-icon.png
+magi-gen "minimalist app icon, a blue lightning bolt" --transparent -o app-icon.png
 ```
 
 ### High quality webp
 ```bash
-magi-image-gen-cli generate "cyberpunk city at night, neon signs" --quality high --output-format webp -o city.webp
+magi-gen generate "cyberpunk city at night, neon signs" --quality high --output-format webp -o city.webp
 ```
 
 ### Quick sketch
 ```bash
-magi-image-gen-cli "rough sketch of a dog" -o dog.png
+magi-gen "rough sketch of a dog" -o dog.png
 ```
 
 ### Different model
 ```bash
-magi-image-gen-cli "abstract art" --model gpt-5.4 -o art.png
+magi-gen "abstract art" --model gpt-5.4 -o art.png
 ```
 
 ## System Prompt
@@ -87,7 +87,7 @@ The system prompt lives in `prompts/system.md` and is compiled in via `include_s
 ## Files
 
 ```
-~/.magi-image-gen-cli/
+~/.magi-gen/
 ├── auth.json       # OAuth credentials (0600)
 ├── settings.json   # Provider config
 └── cache/

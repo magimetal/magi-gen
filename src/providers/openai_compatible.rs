@@ -81,7 +81,7 @@ pub fn openai_compatible_sse_headers(api_key: &str) -> BTreeMap<String, String> 
         ("content-type".to_string(), "application/json".to_string()),
         (
             "user-agent".to_string(),
-            format!("magi-image-gen-cli/{}", env!("CARGO_PKG_VERSION")),
+            format!("magi-gen/{}", env!("CARGO_PKG_VERSION")),
         ),
         ("authorization".to_string(), format!("Bearer {api_key}")),
     ])
