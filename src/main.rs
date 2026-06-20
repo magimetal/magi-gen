@@ -129,6 +129,7 @@ fn write_generate_result(
     output_format: &str,
     transparent: bool,
 ) -> anyhow::Result<()> {
+    let original_base64 = result.base64.clone();
     let (base64_image, detected_color) = if transparent {
         let (base64_image, color) = chromakey::transparent_png_base64(&result.base64)?;
         (base64_image, Some(color))
@@ -149,6 +150,20 @@ fn write_generate_result(
         let output = output.unwrap_or_else(|| default_output_for_prompt(prompt, output_format));
         output::write_image_result(&base64_image, &output)?;
         eprintln!("wrote {}", output.display());
+
+        if transparent {
+            let mut original_path = output.clone();
+            if let Some(stem) = output.file_stem() {
+                let mut name = stem.to_os_string();
+                name.push("-original");
+                original_path.set_file_name(name);
+                if let Some(ext) = output.extension() {
+                    original_path.set_extension(ext);
+                }
+            }
+            output::write_image_result(&original_base64, &original_path)?;
+            eprintln!("wrote {}", original_path.display());
+        }
     }
     Ok(())
 }

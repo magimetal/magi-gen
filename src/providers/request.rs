@@ -1,7 +1,7 @@
 use serde_json::{Value, json};
 
 const SYSTEM_PROMPT: &str = include_str!("../../prompts/system.md");
-pub const TRANSPARENT_PROMPT_INSTRUCTION: &str = " YOU MUST make the background a solid color like FF0096, the user intends to remove the background later";
+pub const TRANSPARENT_PROMPT_INSTRUCTION: &str = " YOU MUST make the background a solid bright pink color like FF0096, the user intends to remove the background later";
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ImageRequest {

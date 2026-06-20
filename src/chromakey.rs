@@ -3,7 +3,8 @@ use base64::Engine;
 use image::{ImageFormat, RgbaImage};
 use std::io::Cursor;
 
-pub const CHROMAKEY_THRESHOLD: f64 = 5000.0;
+pub const CHROMAKEY_MIN_THRESHOLD: f64 = 800.0;
+pub const CHROMAKEY_MAX_THRESHOLD: f64 = 3000.0;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct RgbColor {
@@ -28,10 +29,15 @@ fn chromakey_image(image: RgbaImage) -> anyhow::Result<(Vec<u8>, RgbColor)> {
     let color = detect_corner_color(&image)?;
     let (width, height) = image.dimensions();
     let mut pixels = image.into_raw();
-    rustychroma::remove(&mut pixels, color.r, color.g, color.b, CHROMAKEY_THRESHOLD);
-    let mut eroded = pixels.clone();
-    rustychroma::erode(&pixels, &mut eroded, width as usize, height as usize);
-    let image = RgbaImage::from_raw(width, height, eroded)
+    rustychroma::remove_range(
+        &mut pixels,
+        color.r,
+        color.g,
+        color.b,
+        CHROMAKEY_MIN_THRESHOLD,
+        CHROMAKEY_MAX_THRESHOLD,
+    );
+    let image = RgbaImage::from_raw(width, height, pixels)
         .context("chromakey output had invalid RGBA dimensions")?;
 
     let mut cursor = Cursor::new(Vec::new());
@@ -94,12 +100,19 @@ mod tests {
 
     #[test]
     fn chromakey_makes_solid_background_corners_transparent() {
-        let mut image = RgbaImage::from_pixel(4, 4, Rgba([0, 255, 0, 255]));
+        let mut image = RgbaImage::from_pixel(4, 4, Rgba([255, 0, 150, 255]));
         image.put_pixel(1, 1, Rgba([255, 0, 0, 255]));
         image.put_pixel(2, 1, Rgba([255, 0, 0, 255]));
 
         let (png, color) = chromakey_image(image).unwrap();
-        assert_eq!(color, RgbColor { r: 0, g: 255, b: 0 });
+        assert_eq!(
+            color,
+            RgbColor {
+                r: 255,
+                g: 0,
+                b: 150
+            }
+        );
 
         let decoded = image::load_from_memory(&png).unwrap().to_rgba8();
         assert_eq!(decoded.get_pixel(0, 0)[3], 0);
