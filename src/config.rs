@@ -101,12 +101,12 @@ mod tests {
         let settings = Settings {
             default_provider: "codex".to_string(),
             codex: CodexSettings {
-                model: "gpt-5.4".to_string(),
+                model: "gpt-5.5".to_string(),
             },
             openai_compatible: OpenAiCompatibleSettings {
                 base_url: "https://example.test/v1".to_string(),
                 api_key_env_var: "EXAMPLE_KEY".to_string(),
-                model: "gpt-5.4".to_string(),
+                model: "gpt-5.5".to_string(),
             },
         };
 

@@ -1,6 +1,7 @@
 use serde_json::{Value, json};
 
 const SYSTEM_PROMPT: &str = include_str!("../../prompts/system.md");
+pub const TRANSPARENT_PROMPT_INSTRUCTION: &str = " YOU MUST make the background a solid color like FF0096, the user intends to remove the background later";
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ImageRequest {
@@ -9,6 +10,7 @@ pub struct ImageRequest {
     pub size: String,
     pub quality: String,
     pub output_format: String,
+    pub transparent: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -25,6 +27,7 @@ impl ImageRequest {
             &self.size,
             &self.quality,
             &self.output_format,
+            self.transparent,
         )
     }
 }
@@ -35,12 +38,20 @@ pub fn image_request_body(
     size: &str,
     quality: &str,
     output_format: &str,
+    transparent: bool,
 ) -> Value {
+    let instructions = if transparent {
+        format!("{SYSTEM_PROMPT}{TRANSPARENT_PROMPT_INSTRUCTION}")
+    } else {
+        SYSTEM_PROMPT.to_string()
+    };
+    let output_format = if transparent { "png" } else { output_format };
+
     json!({
         "model": model,
         "store": false,
         "stream": true,
-        "instructions": SYSTEM_PROMPT,
+        "instructions": instructions,
         "input": [{
             "role": "user",
             "content": prompt,
@@ -64,9 +75,9 @@ mod tests {
 
     #[test]
     fn request_body_builder_matches_codex_image_shape() {
-        let body = image_request_body("red circle", "gpt-5.4", "1024x1024", "low", "png");
+        let body = image_request_body("red circle", "gpt-5.5", "1024x1024", "low", "png", false);
 
-        assert_eq!(body["model"], "gpt-5.4");
+        assert_eq!(body["model"], "gpt-5.5");
         assert_eq!(body["store"], false);
         assert_eq!(body["stream"], true);
         assert_eq!(body["input"][0]["role"], "user");
@@ -82,19 +93,39 @@ mod tests {
 
     #[test]
     fn output_format_webp_is_written_to_tool_body() {
-        let body = image_request_body("red circle", "gpt-5.4", "1024x1024", "low", "webp");
+        let body = image_request_body("red circle", "gpt-5.5", "1024x1024", "low", "webp", false);
 
         assert_eq!(body["tools"][0]["output_format"], "webp");
+    }
+
+    #[test]
+    fn transparent_flag_adds_background_instruction_to_system_prompt() {
+        let body = image_request_body("red circle", "gpt-5.5", "1024x1024", "low", "png", true);
+
+        assert!(
+            body["instructions"]
+                .as_str()
+                .unwrap()
+                .ends_with(TRANSPARENT_PROMPT_INSTRUCTION)
+        );
+    }
+
+    #[test]
+    fn transparent_flag_forces_png_output_format_in_body() {
+        let body = image_request_body("red circle", "gpt-5.5", "1024x1024", "low", "webp", true);
+
+        assert_eq!(body["tools"][0]["output_format"], "png");
     }
 
     #[test]
     fn image_request_default_output_format_is_png() {
         let request = ImageRequest {
             prompt: "red circle".to_string(),
-            model: "gpt-5.4".to_string(),
+            model: "gpt-5.5".to_string(),
             size: "1024x1024".to_string(),
             quality: "low".to_string(),
             output_format: "png".to_string(),
+            transparent: false,
         };
 
         assert_eq!(request.body()["tools"][0]["output_format"], "png");

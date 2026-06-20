@@ -22,6 +22,9 @@ pub struct Cli {
 
     #[arg(long)]
     pub base64: bool,
+
+    #[arg(long)]
+    pub transparent: bool,
 }
 
 #[derive(Debug, Subcommand)]
@@ -49,7 +52,7 @@ pub struct GenerateArgs {
     pub provider: ProviderKind,
     #[arg(short, long)]
     pub output: Option<PathBuf>,
-    #[arg(long, default_value = "gpt-5.4")]
+    #[arg(long, default_value = "gpt-5.5")]
     pub model: String,
     #[arg(long, default_value = "1024x1024")]
     pub size: String,
@@ -63,6 +66,8 @@ pub struct GenerateArgs {
     pub api_key_env: Option<String>,
     #[arg(long)]
     pub base64: bool,
+    #[arg(long)]
+    pub transparent: bool,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]

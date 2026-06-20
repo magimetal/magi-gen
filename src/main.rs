@@ -1,4 +1,5 @@
 mod auth;
+mod chromakey;
 mod cli;
 mod config;
 mod import;
@@ -49,6 +50,7 @@ fn run(cli: Cli) -> anyhow::Result<()> {
                 base_url: None,
                 api_key_env: None,
                 base64: cli.base64,
+                transparent: cli.transparent,
             })
         }
     }
@@ -68,20 +70,28 @@ fn generate(args: GenerateArgs) -> anyhow::Result<()> {
 
 fn generate_codex(args: GenerateArgs, paths: &AppPaths) -> anyhow::Result<()> {
     if args.model == "gpt-image-2" {
-        anyhow::bail!("Codex provider does not support gpt-image-2 as Responses model; use gpt-5.4")
+        anyhow::bail!("Codex provider does not support gpt-image-2 as Responses model; use gpt-5.5")
     }
     let credential = store::codex_credential(paths)?;
     let provider = CodexImageProvider::new(credential.access, credential.account_id)?;
     let prompt = args.prompt.clone();
-    let output_format = args.output_format.clone();
+    let output_format = effective_output_format(&args.output_format, args.transparent);
     let result = provider.generate(ImageRequest {
         prompt: args.prompt,
         model: args.model,
         size: args.size,
         quality: args.quality,
-        output_format: args.output_format,
+        output_format: output_format.clone(),
+        transparent: args.transparent,
     })?;
-    write_generate_result(result, args.output, args.base64, &prompt, &output_format)
+    write_generate_result(
+        result,
+        args.output,
+        args.base64,
+        &prompt,
+        &output_format,
+        args.transparent,
+    )
 }
 
 fn generate_openai_compatible(args: GenerateArgs) -> anyhow::Result<()> {
@@ -92,15 +102,23 @@ fn generate_openai_compatible(args: GenerateArgs) -> anyhow::Result<()> {
     let api_key = openai_compatible_api_key_from_env(&api_key_env)?;
     let provider = OpenAiCompatibleImageProvider::new(api_key, base_url)?;
     let prompt = args.prompt.clone();
-    let output_format = args.output_format.clone();
+    let output_format = effective_output_format(&args.output_format, args.transparent);
     let result = provider.generate(ImageRequest {
         prompt: args.prompt,
         model: args.model,
         size: args.size,
         quality: args.quality,
-        output_format: args.output_format,
+        output_format: output_format.clone(),
+        transparent: args.transparent,
     })?;
-    write_generate_result(result, args.output, args.base64, &prompt, &output_format)
+    write_generate_result(
+        result,
+        args.output,
+        args.base64,
+        &prompt,
+        &output_format,
+        args.transparent,
+    )
 }
 
 fn write_generate_result(
@@ -109,15 +127,43 @@ fn write_generate_result(
     base64: bool,
     prompt: &str,
     output_format: &str,
+    transparent: bool,
 ) -> anyhow::Result<()> {
+    let (base64_image, detected_color) = if transparent {
+        let (base64_image, color) = chromakey::transparent_png_base64(&result.base64)?;
+        (base64_image, Some(color))
+    } else {
+        (result.base64, None)
+    };
+
+    if let Some(color) = detected_color {
+        eprintln!(
+            "detected transparent background color #{:02X}{:02X}{:02X}",
+            color.r, color.g, color.b
+        );
+    }
+
     if base64 {
-        output::print_base64(&result.base64);
+        output::print_base64(&base64_image);
     } else {
         let output = output.unwrap_or_else(|| default_output_for_prompt(prompt, output_format));
-        output::write_image_result(&result.base64, &output)?;
+        output::write_image_result(&base64_image, &output)?;
         eprintln!("wrote {}", output.display());
     }
     Ok(())
+}
+
+fn effective_output_format(output_format: &str, transparent: bool) -> String {
+    if transparent {
+        if output_format != "png" {
+            eprintln!(
+                "warning: --transparent requires PNG output; ignoring --output-format {output_format}"
+            );
+        }
+        "png".to_string()
+    } else {
+        output_format.to_string()
+    }
 }
 
 fn default_output_for_prompt(prompt: &str, output_format: &str) -> PathBuf {
@@ -266,7 +312,16 @@ mod tests {
             true,
             "prompt",
             "png",
+            false,
         )
         .unwrap();
+    }
+
+    #[test]
+    fn transparent_output_format_is_forced_to_png() {
+        assert_eq!(effective_output_format("webp", true), "png");
+        assert_eq!(effective_output_format("jpeg", true), "png");
+        assert_eq!(effective_output_format("png", true), "png");
+        assert_eq!(effective_output_format("webp", false), "webp");
     }
 }
